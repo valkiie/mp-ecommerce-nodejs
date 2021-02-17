@@ -1,5 +1,5 @@
-var express = require('express');
-var exphbs = require('express-handlebars');
+const express = require('express');
+const exphbs = require('express-handlebars');
 const mercadopago = require('mercadopago');
 
 mercadopago.configure({
@@ -7,14 +7,12 @@ mercadopago.configure({
     integrator_id: 'dev_2e4ad5dd362f11eb809d0242ac130004'
 });
 
+const bodyparser = require('body-parser');
 
-var port = process.env.PORT || 3000
 
-var app = express();
+let port = process.env.PORT || 3000;
 
-const PaymentController = require("./controllers/PaymentController");
-const PaymentService = require("./services/PaymentService");
-const PaymentInstance = new PaymentController(new PaymentService());
+let app = express();
 
 let hbs = exphbs.create({
     helpers: {
@@ -31,11 +29,10 @@ app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 
 app.use(express.static('assets'));
-const bodyparser = require('body-parser'); //Post request
 
-app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({ extended: false })) // Post request imports
 app.use('/assets', express.static(__dirname + '/assets'));
+app.use(bodyparser.json());
+app.use(bodyparser.urlencoded({ extended: false }));
 
 app.get('/', function (req, res) {
     res.render('home');
@@ -45,15 +42,6 @@ app.get('/detail', function (req, res){
     res.render('detail', req.query);
 });
 
-app.get('/success', function (req, res) {
-    res.render('success', req.query);
-});
-app.get('/failure', function (req, res) {
-    res.render('failure', req.query);
-});
-app.get('/pending', function (req, res) {
-    res.render('pending', req.query);
-});
 app.post('/checkout', function (req, res) {
     const items = [
         {
@@ -111,24 +99,26 @@ app.post('/checkout', function (req, res) {
         .then(function (response) {
             // Este valor reemplazará el string "<%= global.id %>" en tu HTML
             global.id = response.body.id;
-
-            //console.log(response);
             console.log("Preferences id -> "+response.body.id);
-
             res.redirect(response.body.init_point);
-
         }).catch(function (error) {
         console.log(error);
     });
 });
 
+
+app.get('/success', function (req, res) {
+    res.render('success', req.query);
+});
+app.get('/failure', function (req, res) {
+    res.render('failure', req.query);
+});
+app.get('/pending', function (req, res) {
+    res.render('pending', req.query);
+});
+
 app.post('/webhook', function (req, res) {
     console.log('received webhook update');
-    var id = req.body.action;
-
-    //console.log("Esta es la ID "+id);
-    //console.log(req.body);
-    console.log("Empieza el stringify");
     console.log(JSON.stringify(req.body,null,2));
     if(req.method==='POST'){
         let body = "";
@@ -136,16 +126,12 @@ app.post('/webhook', function (req, res) {
             body += chunk.toString();
         });
         req.on("end", () => {
-            console.log("webhook response", body);
             res.end("ok");
         });
     }
     return res.status(200);
 });
 
-app.post('/payment', function (req, res){
-    PaymentInstance.getMercadoPagoLink(req,res);
-});
 app.listen(port);
 
 
