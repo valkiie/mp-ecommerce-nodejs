@@ -1,7 +1,8 @@
 const axios = require("axios");
 const mercadopago = require("mercadopago");
 mercadopago.configure({
-    access_token: 'APP_USR-8208253118659647-112521-dd670f3fd6aa9147df51117701a2082e-677408439'
+    access_token: 'APP_USR-8208253118659647-112521-dd670f3fd6aa9147df51117701a2082e-677408439',
+    integrator_id: 'dev_2e4ad5dd362f11eb809d0242ac130004'
 });
 
 class PaymentService {
@@ -72,13 +73,25 @@ class PaymentService {
         };
 
         try {
-            const request = await axios.post(url, preferences, {
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-integrator-id": "dev_2e4ad5dd362f11eb809d0242ac130004"
-                }
+            mercadopago.preferences.create(preferences)
+                .then(function (response) {
+                    global.id = response.body.id;
+                    console.log("preference_id ", response.body.id);
+                    res.redirect(response.body.init_point);
+                }).catch(function (error) {
+                console.log(error);
+                res.status(500).send({
+                    message: error
+                });
             });
-            return request.data;
+
+            // const request = await axios.post(url, preferences, {
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //         "x-integrator-id": "dev_2e4ad5dd362f11eb809d0242ac130004"
+            //     }
+            // });
+            // return request.data;
         } catch (e) {
             console.log(e);
         }
